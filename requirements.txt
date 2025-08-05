@@ -1,0 +1,6 @@
+Pillow
+playwright
+beautifulsoup4
+spidev
+numpy
+gpiozero
