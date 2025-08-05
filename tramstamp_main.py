@@ -7,8 +7,8 @@ import time
 
 #LCD DISPLAY
 
-from lib import LCD_2inch
-import spidev as SPI
+# from lib import LCD_2inch
+# import spidev as SPI
 
 # Raspberry Pi pin configuration:
 RST = 27
@@ -87,6 +87,13 @@ test_trams = [
  tramInfo(24, "AzartPlein", "6", "19:45", True ),
 ]
 
+def display_stamp(display):
+    stamp = Image.open("Images/tramp_stamp.png")
+    stamp = stamp.resize((SCREEN_WIDTH, SCREEN_HEIGHT))
+    frame = Image.new("RGB", (SCREEN_WIDTH, SCREEN_HEIGHT), "WHITE")
+    frame.paste(stamp, (0, 0))
+    display.ShowImage(frame)
+
 def display_trams(display, trams):    
     frame = Image.new("RGB", (SCREEN_WIDTH, SCREEN_HEIGHT), "WHITE")
     draw = ImageDraw.Draw(frame)        
@@ -152,13 +159,16 @@ def fetch_trams(html):
 
 def main():    
     try:
-        # display = DummyLCD()
-        
-        display = LCD_2inch.LCD_2inch()        
+        display = DummyLCD()
+                
+        # display = LCD_2inch.LCD_2inch()        
         display.Init() # Initialize library.
         display.clear() #Clear display.
         display.bl_DutyCycle(50) # Set the backlight to 100
-        
+
+        # display loading tramp stamp
+        display_stamp(display)
+
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             

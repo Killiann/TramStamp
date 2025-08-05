@@ -1,6 +1,6 @@
 Pillow
 playwright
 beautifulsoup4
-spidev
+# spidev
 numpy
 gpiozero
