@@ -164,7 +164,7 @@ def main():
         display = LCD_2inch.LCD_2inch()        
         display.Init() # Initialize library.
         display.clear() #Clear display.
-        display.bl_DutyCycle(50) # Set the backlight to 100
+        display.bl_DutyCycle(100) # Set the backlight to 100
 
         # display loading tramp stamp
         display_stamp(display)
