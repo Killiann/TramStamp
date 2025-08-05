@@ -155,7 +155,9 @@ def fetch_trams(html):
                 
             trams.append(tramInfo(number, destination, minutes, arrival_time, delayed))
             
-    return trams
+    if len(trams) > 0:
+        return trams
+    else: return None
 
 def main():    
     try:
@@ -181,7 +183,11 @@ def main():
             try:
                 while(True):
                     trams = fetch_trams(page.content())        
-                    display_trams(display, trams)    
+                    if trams is not None: display_trams(display, trams)    
+                    else: 
+                        #sleep for 5 minutes if no upcoming trams are found
+                        display_stamp(display)
+                        time.sleep(300)
                     time.sleep(2)
             except KeyboardInterrupt:
                 print("KeyboardInterrupt received, closing browser...")
