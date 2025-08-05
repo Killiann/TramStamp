@@ -7,8 +7,8 @@ import time
 
 #LCD DISPLAY
 
-# from lib import LCD_2inch
-# import spidev as SPI
+from lib import LCD_2inch
+import spidev as SPI
 
 # Raspberry Pi pin configuration:
 RST = 27
@@ -159,9 +159,9 @@ def fetch_trams(html):
 
 def main():    
     try:
-        display = DummyLCD()
+        # display = DummyLCD()
                 
-        # display = LCD_2inch.LCD_2inch()        
+        display = LCD_2inch.LCD_2inch()        
         display.Init() # Initialize library.
         display.clear() #Clear display.
         display.bl_DutyCycle(50) # Set the backlight to 100
