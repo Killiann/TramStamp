@@ -230,7 +230,7 @@ def main():
         
             #button setup
             button = Button(BUTTON_PIN)    
-            button.when_pressed = button_press(display, tram_page, metro_page)
+            button.when_pressed = lambda: button_press(display, tram_page, metro_page)
         
             try:
                 while(True):                                                                   
