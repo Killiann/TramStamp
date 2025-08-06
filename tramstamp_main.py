@@ -5,8 +5,9 @@ from bs4 import BeautifulSoup
 import logging
 import time 
 
-#LCD DISPLAY
-
+#FOR PI
+from gpiozero import Button
+from signal import pause
 from lib import LCD_2inch
 import spidev as SPI
 
@@ -16,6 +17,9 @@ DC = 25
 BL = 18
 bus = 0 
 device = 0 
+
+#button config
+BUTTON_PIN = 21
 
 logging.basicConfig(level=logging.DEBUG)
 SCREEN_WIDTH=320
@@ -159,6 +163,9 @@ def fetch_trams(html):
         return trams
     else: return None
 
+def button_press():
+    print("button pressed.")
+
 def main():    
     try:
         # display = DummyLCD()
@@ -168,6 +175,10 @@ def main():
         display.clear() #Clear display.
         display.bl_DutyCycle(100) # Set the backlight to 100
 
+        #button setup
+        button = Button(BUTTON_PIN)    
+        button.when_pressed = button_press
+        
         # display loading tramp stamp
         display_stamp(display)
 
@@ -181,11 +192,11 @@ def main():
             page.wait_for_load_state('networkidle') 
         
             try:
-                while(True):
+                while(True):                                                            
                     trams = fetch_trams(page.content())        
                     if trams is not None: display_trams(display, trams)    
                     else: 
-                        #sleep for 5 minutes if no upcoming trams are found
+                        #sleep every 5 minutes if no upcoming trams are found (night time)
                         display_stamp(display)
                         time.sleep(300)
                     time.sleep(2)
