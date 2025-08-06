@@ -4,6 +4,8 @@ from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 import logging
 import time 
+from enum import IntEnum
+from pynput import keyboard
 
 #FOR PI
 from gpiozero import Button
@@ -22,7 +24,7 @@ device = 0
 BUTTON_PIN = 21
 
 logging.basicConfig(level=logging.DEBUG)
-SCREEN_WIDTH=320
+SCREEN_WIDTH=320 
 SCREEN_HEIGHT=240
 
 user_agents = [
@@ -86,6 +88,12 @@ class tramInfo:
         self.time = time
         self.delayed = delayed
         
+TAB_TRAM = 0
+TAB_METRO = 1
+TAB_IMAGE = 2
+
+current_tab = TAB_TRAM
+        
 test_trams = [
  tramInfo(19, "Diemen Sniep", "4", "19:42", False ),
  tramInfo(24, "AzartPlein", "6", "19:45", True ),
@@ -105,7 +113,7 @@ def display_trams(display, trams):
     item_h = 60
     border = 1
     font_size = 20
-    
+            
     for i, tram in enumerate(trams):
         print(f"drawing tram {tram.tram}")
         ypos = item_h * i
@@ -119,7 +127,6 @@ def display_trams(display, trams):
         
         font = ImageFont.truetype("./Font/Roboto-Regular.ttf", font_size)
         font_bold = ImageFont.truetype("./Font/Roboto-Bold.ttf", font_size)
-
         
         font_y = 20
         
@@ -131,7 +138,7 @@ def display_trams(display, trams):
     
     display.ShowImage(frame)
     
-def fetch_trams(html):
+def fetch_departures(html):
     soup = BeautifulSoup(html, "html.parser")    
     ul_element = soup.find('ul', {'class': 'flex flex-col space-y-2'})
     
@@ -163,43 +170,73 @@ def fetch_trams(html):
         return trams
     else: return None
 
-def button_press():
-    print("button pressed.")
+def update(display, tram_page, metro_page):
+    if current_tab == TAB_TRAM:     
+        print("Fetching tram.")                                                                              
+        trams = fetch_departures(tram_page.content())        
+        if trams is not None: display_trams(display, trams)    
+                                    
+    elif current_tab == TAB_METRO:
+        print("Fetching metro.")
+        metro = fetch_departures(metro_page.content())        
+        if metro is not None: display_trams(display, metro)    
+        else: 
+            #sleep every 5 minutes if no upcoming metro are found (night time)
+            display_stamp(display)
+            time.sleep(300) 
+                                        
+    elif current_tab == TAB_IMAGE:
+        display_stamp(display)
+        
+def button_press(display,tram_page, metro_page):        
+    global current_tab
+    
+    # if key == keyboard.Key.space:
+    current_tab = int(current_tab) + 1
+    if current_tab == 3:
+        current_tab = 0               
+    print(f"button pressed. tab: {current_tab}")        
+    update(display, tram_page, metro_page)                              
 
 def main():    
     try:
-        # display = DummyLCD()
-                
+        # display = DummyLCD()                
+        
         display = LCD_2inch.LCD_2inch()        
         display.Init() # Initialize library.
         display.clear() #Clear display.
-        display.bl_DutyCycle(100) # Set the backlight to 100
-
-        #button setup
-        button = Button(BUTTON_PIN)    
-        button.when_pressed = button_press
+        display.bl_DutyCycle(100) # Set the backlight to 100        
         
+        # #keyboard for testing
+        # listener = keyboard.Listener(on_press=button_press)
+        # listener.start()
+                   
         # display loading tramp stamp
         display_stamp(display)
 
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            
+            browser = p.chromium.launch(headless=True)            
             context = browser.new_context(user_agent=random.choice(user_agents))
-            page = context.new_page()
             
-            page.goto('https://gvb.nl/en/travel-information/stop/9508073')
-            page.wait_for_load_state('networkidle') 
+            # load tram live departures page
+            tram_page = context.new_page()            
+            tram_page.goto('https://gvb.nl/en/travel-information/stop/9508073')
+            tram_page.wait_for_load_state('networkidle') 
+        
+            #load metro live departures page
+            metro_page = context.new_page()            
+            metro_page.goto('https://gvb.nl/en/travel-information/stop/9509579')
+            metro_page.wait_for_load_state('networkidle') 
+        
+            #button setup
+            button = Button(BUTTON_PIN)    
+            button.when_pressed = button_press(display, tram_page, metro_page)
         
             try:
-                while(True):                                                            
-                    trams = fetch_trams(page.content())        
-                    if trams is not None: display_trams(display, trams)    
-                    else: 
-                        #sleep every 5 minutes if no upcoming trams are found (night time)
-                        display_stamp(display)
-                        time.sleep(300)
+                while(True):                                                                   
+                    update(display, tram_page, metro_page)                            
                     time.sleep(2)
+                    
             except KeyboardInterrupt:
                 print("KeyboardInterrupt received, closing browser...")
             finally:
