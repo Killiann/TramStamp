@@ -4,8 +4,8 @@ from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 import logging
 import time 
-from enum import IntEnum
-from pynput import keyboard
+# from enum import IntEnum
+# from pynput import keyboard
 
 #FOR PI
 from gpiozero import Button
