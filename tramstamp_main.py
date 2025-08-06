@@ -196,7 +196,7 @@ def button_press(display,tram_page, metro_page):
     if current_tab == 3:
         current_tab = 0               
     print(f"button pressed. tab: {current_tab}")        
-    update(display, tram_page, metro_page)                              
+    # update(display, tram_page, metro_page)                              
 
 def main():    
     try:
